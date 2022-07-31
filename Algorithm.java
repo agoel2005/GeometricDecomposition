@@ -7,42 +7,187 @@ public class Algorithm {
 	    ArrayList<Object> maybe = new ArrayList<Object>();
 		maybe.add(new Edge(1,2));
 		maybe.add(new Edge(1,3));
-		//maybe.add(new Edge(1,4));
+		maybe.add(new Edge(1,4));
+		maybe.add(new Edge(1,5));
 		
 		ArrayList<Object> maybe2 = new ArrayList<Object>();
 		maybe2.add(new Netflow(1));
-		maybe2.add(new Edge(0,1));
-		maybe2.add(new Edge(-1,1));
 		nInequality whatIf = new nInequality(maybe, maybe2);
 		
-		System.out.println(getCases(whatIf));
-		System.out.println(getCases(whatIf).size() + " cases");
-
+		ArrayList<Object> maybe3 = new ArrayList<>();
+		maybe3.add(new Edge(2,3));
+		maybe3.add(new Edge(2,4));
 		
-		ArrayList<ArrayList<Integer>> volume = new ArrayList<>();
+		ArrayList<Object> maybe4 = new ArrayList<>();
+		maybe4.add(new Netflow(2));
+		maybe4.add(new Edge(1,2));
 		
-		//go through the inequalities from bottom to top 
-//		for (int i = f.getInequalities().size() - 1; i>=0; i--) {
-//			
-//			Inequality original = f.getInequalities().get(i);
-//			
-//			int leftLength = original.less().size();
-//			
-//			//subtract by 1 because the first element is the netflow
-//			int rightLength = original.greater().size() - 1;
-//			
-//		
-//		}
+		ArrayList<Object> maybe5 = new ArrayList<Object>();
+		maybe5.add(new Edge(3,4));
 
+		ArrayList<Object> maybe6 = new ArrayList<Object>();
+		maybe6.add(new Netflow(3));
+		maybe6.add(new Edge(1,3));
+		maybe6.add(new Edge(2,3));
+		
+	
+		
+		nInequality whatIf2 = new nInequality(maybe3, maybe4);
+		
+		nInequality whatIf3 = new nInequality(maybe5, maybe6);
+		
+		FlowPolytope f = new FlowPolytope(whatIf, whatIf2, whatIf3);
+		System.out.println(f);
+		String s = getVolume(f);
+		System.out.println(s.substring(3, s.lastIndexOf('+')));
+		
+		
 	}
 	
+	static String getVolume(FlowPolytope f) {
+		String volume = "";
+		ArrayList<nInequality> polytopeDefinition = (ArrayList<nInequality>) f.getInequalities();
+		
+		int totalInequalities = polytopeDefinition.size();
+		for (int i = totalInequalities - 1; i>-1; i--) {
+			nInequality currentInequality = f.getInequalities().get(i);
+			ArrayList<nInequality> cases = getCases(currentInequality);
+		
+			for (nInequality ineq: cases) {
+				System.out.println(ineq + "hi");
+				ArrayList<nInequality> inequalitiesLeft = new ArrayList<>();
+				for (int j = 0; j<i; j++) {
+					inequalitiesLeft.add(polytopeDefinition.get(j));
+				}
+				
+				FlowPolytope newF = new FlowPolytope(inequalitiesLeft);
+				System.out.println(newF);
+				if (ineq.getTerms().size() == 2) {
+					int chainLength = ineq.getTerms().get(0).size();
+					volume = volume + " + \\frac{1}{" +factorial(chainLength) + "} a_" + (i+1) + "^{" + chainLength +  "} [";
+				}
+				
+				
+				//chains of length more than 2 that start with sum of edges <= netflow 
+				else if (ineq.getEdgeInfo()[0] == true) {
+					int currentIndex = 0;
+					
+					while (currentIndex < ineq.getTerms().size() - 1) {
+						System.out.println(currentIndex);
+						int chainLength = ineq.getTerms().get(currentIndex).size();
+						volume = volume + " + \\frac{1}{" +factorial(chainLength) + "} a_" + (i+1) + "^{" + chainLength +  "} [";
+						int chainIndex = currentIndex;
+						//find next term of all edges that's greater than this netflow
+						int nextTerm = 0;
+						for (int x = currentIndex + 2; x<ineq.getTerms().size(); x++) {
+							if (ineq.getEdgeInfo()[x] == true) {
+								nextTerm = x;
+								break;
+							}
+						}
+						int extraTerms = 0;
+						int indexOfNextNetflow = 0;
+						for (int x = nextTerm; x<ineq.getTerms().size(); x++) {
+							if (ineq.getEdgeInfo()[x] == true) {
+								extraTerms ++;
+							}
+							else {
+								indexOfNextNetflow = x;
+								currentIndex = x;
+								break;
+							}
+						}
+						Edge toBeInflated = null;
+						for (Object obj: ineq.getTerms().get(indexOfNextNetflow)) {
+							if (!(ineq.getTerms().get(chainIndex + 1).contains(obj))) {
+								toBeInflated = (Edge) obj;
+							}
+						}
+						
+						int inequalityRow = toBeInflated.getFirst();
+						//subtract by 1 because the edges start at edge 1
+						nInequality toBeChanged = newF.getInequalities().get(inequalityRow - 1);
+						List<Object> edges = new ArrayList(toBeChanged.getTerms().get(0));
+						for (int x = 0; x<extraTerms; x++) {
+							edges.add(toBeInflated);
+						}
+
+						
+						nInequality newInequality = new nInequality(edges, toBeChanged.getTerms().get(1));
+						newF.changeInequality(newInequality, inequalityRow - 1);
+					}
+				}
+				
+				//netflow <= chain
+				else{
+					int currentIndex = 0;
+					
+					
+					while (currentIndex < ineq.getTerms().size() - 1) {
+						
+						System.out.println(currentIndex);
+
+						int currentLength = ineq.getTerms().get(currentIndex + 1).size();
+						int prevNetflowIndex = currentIndex;
+
+						//find next netflow term that's greater than this 
+						int nextNetflow = 0;
+						for (int x = currentLength + 1; x<ineq.getTerms().size(); x++) {
+							if (ineq.getEdgeInfo()[x] == false) {
+								nextNetflow = x;
+								currentIndex = x;
+								break;
+							}
+						}
+						
+						int finalLength = ineq.getTerms().get(nextNetflow - 1).size();
+						int expansion = finalLength - currentLength + 1;
+						
+						Edge toBeInflated = null;
+						for (Object obj: ineq.getTerms().get(nextNetflow)) {
+							if (!(ineq.getTerms().get(prevNetflowIndex).contains(obj))) {
+								toBeInflated = (Edge) obj;
+							}
+						}
+						
+						int inequalityRow = toBeInflated.getFirst();
+						//subtract by 1 because the edges start at edge 1
+						nInequality toBeChanged = newF.getInequalities().get(inequalityRow - 1);
+						List<Object> edges = new ArrayList(toBeChanged.getTerms().get(0));
+						for (int x = 0; x<expansion; x++) {
+							edges.add(toBeInflated);
+						}
+
+						
+						nInequality newInequality = new nInequality(edges, toBeChanged.getTerms().get(1));
+						newF.changeInequality(newInequality, inequalityRow - 1);
+					}
+				}
+				
+				
+								
+				volume =  volume + getVolume(newF) + "]";
+			}
+			
+			
+		}
+		
+		return volume;
+	}
+	static int factorial(int n) {
+		int ans = 1;
+		for (int i = 1; i<=n; i++) {
+			ans = ans * i;
+		}
+		return ans;
+	}
 	
 	static ArrayList<nInequality> getCases(nInequality i) {
 		ArrayList<nInequality> cases = new ArrayList<>();
 		List<List<Object> >terms = i.getTerms();
 		int numTerms = terms.size();
 		
-		if (i.getEdgeInfo().get(0) == true) {
+		if (i.getEdgeInfo()[0] == true) {
 			if (terms.size() == 2) {
 				if (terms.get(1).size() == 1) {
 					cases.add(i);
@@ -121,7 +266,7 @@ public class Algorithm {
 						else {
 							newCase.add(0, right);
 							newCase.add(0, middle);
-							newCase.add(left);
+							newCase.add(0, left);
 						}
 	
 					}
@@ -205,13 +350,8 @@ public class Algorithm {
 			
 			
 			return cases;
-			
-			
-			
-		}
-		
-					
-		
+	
+		}	
 		
 		return cases;
 	}
@@ -221,7 +361,7 @@ public class Algorithm {
 
 class nInequality{
 	List<List<Object>> terms;
-	List<Boolean> isEdges;
+	boolean[] isEdges;
 	
 	@Override
 	public String toString() {
@@ -242,15 +382,17 @@ class nInequality{
 
 	public nInequality(List<List<Object>> a) {
 		terms = a;
-		isEdges = new ArrayList<>();
+		
+		isEdges = new boolean[terms.size()];
+		
 		for (int i = 0; i<terms.size(); i++) {
+			boolean good = true;
 			for(Object obj: terms.get(i)) {
 				if (!(obj instanceof Edge)) {
-					isEdges.add(false);
-					break;
+					good = false;
 				}
 			}
-			isEdges.add(true);
+			isEdges[i] = good;
 		}
 	}
 	
@@ -259,24 +401,25 @@ class nInequality{
 		for (List<Object> term: a) {
 			terms.add(term);
 		}
+		isEdges = new boolean[terms.size()];
 		
-		isEdges = new ArrayList<>();
 		for (int i = 0; i<terms.size(); i++) {
+			boolean good = true;
 			for(Object obj: terms.get(i)) {
 				if (!(obj instanceof Edge)) {
-					isEdges.add(false);
-					break;
+					good = false;
 				}
 			}
-			isEdges.add(true);
+			isEdges[i] = good;
 		}
+
 	}
 	
 	public List<List<Object>> getTerms(){
 		return terms;
 	}
 	
-	public List<Boolean> getEdgeInfo(){
+	public boolean[] getEdgeInfo(){
 		return isEdges;
 	}
 	
@@ -285,53 +428,49 @@ class nInequality{
 }
 
 
-
-class Inequality{
-	List<Object> left;
-	List<Object> right;
-	public Inequality(List<Object> a, List<Object> b) {
-		left = a;
-		right = b;
-	}
-	public void printInequality() {
-		for (Object element : left) {
-		}
-		System.out.println(left + " <= " + right);
-	}
-	
-	public List<Object> less(){
-		return left;
-	}
-	
-	public List<Object> greater(){
-		return right;
-	}
-	
-	
-}
-
 	
 class FlowPolytope{
-	List<Inequality> conditions;
+	List<nInequality> conditions;
 	
-	public FlowPolytope() {
-		conditions = new ArrayList<Inequality>();
+	public String toString() {
+		String s = "";
+		for (nInequality ineq: conditions) {
+			s = s + ineq.toString() + "\n";
+		}
+		return s;
 	}
 	
-	public FlowPolytope(List<Inequality> a) {
+	public FlowPolytope() {
+		conditions = new ArrayList<nInequality>();
+	}
+	
+	public FlowPolytope(List<nInequality> a) {
 		conditions = a;
 	}
 	
-	public void addInequality(Inequality a) {
+	public FlowPolytope(nInequality...a) {
+		conditions = new ArrayList<>();
+		for (nInequality ineq: a) {
+			conditions.add(ineq);
+		}
+	}
+	
+	public void addInequality(nInequality a) {
 		conditions.add(a);
 	}
+	
+	public void changeInequality(nInequality a, int index) {
+		conditions.remove(index);
+		conditions.add(index, a);
+	}
+	
 	public void printPolytope() {
-		for(Inequality i: conditions) {
-			i.printInequality();
+		for(nInequality i: conditions) {
+			System.out.println(i);
 		}
 	}
 
-	public List<Inequality> getInequalities(){
+	public List<nInequality> getInequalities(){
 		return conditions;
 	}
 	
@@ -352,6 +491,14 @@ class Edge{
 	}
 	public void printEdge() {
 		System.out.println(this.start + ", " + this.end);
+	}
+	
+	public int getFirst() {
+		return start;
+	}
+	
+	public int getLast() {
+		return end;
 	}
 }
 
