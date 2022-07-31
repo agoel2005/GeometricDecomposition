@@ -4,39 +4,39 @@ import java.util.*;
 public class Algorithm {
 
 	public static void main(String[] args) {
-	    ArrayList<Object> maybe = new ArrayList<Object>();
-		maybe.add(new Edge(1,2));
-		maybe.add(new Edge(1,3));
-		maybe.add(new Edge(1,4));
-		maybe.add(new Edge(1,5));
+	    ArrayList<Object> term1 = new ArrayList<Object>();
+		term1.add(new Edge(1,2));
+		term1.add(new Edge(1,3));
+		term1.add(new Edge(1,4));
+		term1.add(new Edge(1,5));
 		
-		ArrayList<Object> maybe2 = new ArrayList<Object>();
-		maybe2.add(new Netflow(1));
-		nInequality whatIf = new nInequality(maybe, maybe2);
+		ArrayList<Object> term2 = new ArrayList<Object>();
+		term2.add(new Netflow(1));
+		nInequality ineq1 = new nInequality(term1, term2);
 		
-		ArrayList<Object> maybe3 = new ArrayList<>();
-		maybe3.add(new Edge(2,3));
-		maybe3.add(new Edge(2,4));
+		ArrayList<Object> term3 = new ArrayList<>();
+		term3.add(new Edge(2,3));
+		term3.add(new Edge(2,4));
 		
-		ArrayList<Object> maybe4 = new ArrayList<>();
-		maybe4.add(new Netflow(2));
-		maybe4.add(new Edge(1,2));
+		ArrayList<Object> term4 = new ArrayList<>();
+		term4.add(new Netflow(2));
+		term4.add(new Edge(1,2));
 		
-		ArrayList<Object> maybe5 = new ArrayList<Object>();
-		maybe5.add(new Edge(3,4));
+		ArrayList<Object> term5 = new ArrayList<Object>();
+		term5.add(new Edge(3,4));
 
-		ArrayList<Object> maybe6 = new ArrayList<Object>();
-		maybe6.add(new Netflow(3));
-		maybe6.add(new Edge(1,3));
-		maybe6.add(new Edge(2,3));
+		ArrayList<Object> term6 = new ArrayList<Object>();
+		term6.add(new Netflow(3));
+		term6.add(new Edge(1,3));
+		term6.add(new Edge(2,3));
 		
 	
 		
-		nInequality whatIf2 = new nInequality(maybe3, maybe4);
+		nInequality ineq2 = new nInequality(term3, term4);
 		
-		nInequality whatIf3 = new nInequality(maybe5, maybe6);
+		nInequality ineq3 = new nInequality(term5, term6);
 		
-		FlowPolytope f = new FlowPolytope(whatIf, whatIf2, whatIf3);
+		FlowPolytope f = new FlowPolytope(ineq1, ineq2, ineq3);
 		System.out.println(f);
 		String s = getVolume(f);
 		System.out.println(s.substring(3, s.lastIndexOf('+')));
