@@ -4,55 +4,12 @@ import java.util.*;
 public class Algorithm {
 
 	public static void main(String[] args) {
-	    ArrayList<Object> term1 = new ArrayList<Object>();
-	//	term1.add(new Edge(1,2));
-	//    term1.add(new Edge(1,3));
-		term1.add(new Edge(1,4));
-		term1.add(new Edge(1,5));
-		term1.add(new Edge(1,6));
-		term1.add(new Edge(1,7));
 		
-		ArrayList<Object> term2 = new ArrayList<Object>();
-		term2.add(new Netflow(1));
-		nInequality ineq1 = new nInequality(term1, term2);
-		
-		ArrayList<Object> term3 = new ArrayList<>();
-	//	term3.add(new Edge(2,3));
-	//	term3.add(new Edge(2,4));
-	//	term3.add(new Edge(2,5));
-		term3.add(new Edge(2,6));
-		term3.add(new Edge(2,7));
-		
-		ArrayList<Object> term4 = new ArrayList<>();
-		term4.add(new Netflow(2));
-		//term4.add(new Edge(1,2));
-		
-		ArrayList<Object> term5 = new ArrayList<Object>();
-	//	term5.add(new Edge(3,4));
-	//	term5.add(new Edge(3,5));
-		term5.add(new Edge(3,6));
-		term5.add(new Edge(3,7));
-		ArrayList<Object> term6 = new ArrayList<Object>();
-		term6.add(new Netflow(3));
-	//	term6.add(new Edge(1,3));
-	//	term6.add(new Edge(2,3));
-		
-		ArrayList<Object> term7 = new ArrayList<>();
-		term7.add(new Edge(4,5));
-		
-		ArrayList<Object> term8 = new ArrayList<>();
-	//	term8.add(new Netflow(4));
-		term8.add(new Edge(1,4));
-		term8.add(new Edge(2,4));
-		term8.add(new Edge(3,4));
-				
-		nInequality ineq2 = new nInequality(term3, term4);
-		
-		nInequality ineq3 = new nInequality(term5, term6);
-		
-		nInequality ineq4 = new nInequality(term7, term8);
-		
-		FlowPolytope f = new FlowPolytope(ineq1, ineq2, ineq3);
+		//for the partition, just enter in the parts normally as shown below
+		Partition p = new Partition(4,3,2,1);
+		//over here, the two inputs are the partition and the value of n
+		FlowPolytope f = new FlowPolytope(p, 8);
+	
 		System.out.println(f);
 		String s = getVolume(f);
 		String s2 = s.replace("( +", "(");
@@ -70,7 +27,6 @@ public class Algorithm {
 			return "";
 		}
 		if (polytopeDefinition.size() == 1) {
-			System.out.println(f);
 			return " + \\frac{1}{" +factorial(polytopeDefinition.get(0).getTerms().get(0).size()) + "} a_1^{" + polytopeDefinition.get(0).getTerms().get(0).size() +  "}";
 		}
 		
@@ -79,11 +35,8 @@ public class Algorithm {
 		//for (int i = totalInequalities - 1; i>-1; i--) {
 			nInequality currentInequality = f.getInequalities().get(totalInequalities -1 );
 			ArrayList<nInequality> cases = new ArrayList(getCases(currentInequality));
-			for (nInequality blah: cases) {
-				System.out.println(blah);
-			}
+			
 			for (nInequality ineq: cases) {
-				System.out.println(ineq + "hi");
 				ArrayList<nInequality> inequalitiesLeft = new ArrayList<>();
 				for (int j = 0; j<totalInequalities - 1; j++) {
 					inequalitiesLeft.add(polytopeDefinition.get(j));
@@ -108,7 +61,6 @@ public class Algorithm {
 					volume = volume + " + \\frac{1}{" +factorial(chainLength) + "} a_" + (totalInequalities) + "^{" + chainLength +  "} \\left (";
 					while (currentIndex < ineq.getTerms().size() - 1) {
 						chainLength = ineq.getTerms().get(currentIndex).size();
-						System.out.println(chainLength);
 						int chainIndex = currentIndex;
 						int expansion = 0;
 						Edge toBeInflated = new Edge(1,2);
@@ -139,8 +91,6 @@ public class Algorithm {
 								}
 							}
 							expansion = ineq.getTerms().get(indexOfNextNetflow - 1).size() - ineq.getTerms().get(chainIndex).size();
-							System.out.println(ineq.getTerms().get(indexOfNextNetflow).get(ineq.getTerms().get(indexOfNextNetflow).size() - 1));
-							System.out.println(indexOfNextNetflow + ", " + chainIndex);
 							toBeInflated = (Edge) ineq.getTerms().get(indexOfNextNetflow).get(ineq.getTerms().get(indexOfNextNetflow).size() - 1);
 						}
 						
@@ -155,7 +105,6 @@ public class Algorithm {
 						int inequalityRow = toBeInflated.getFirst();
 						//subtract by 1 because the edges start at edge 1
 						nInequality toBeChanged = new nInequality(f.getInequalities().get(inequalityRow - 1).getTerms());
-						System.out.println(toBeChanged);
 						List<List<Object>> newTerms = new ArrayList<>();
 						for (List<Object> terms: toBeChanged.getTerms()) {
 							List<Object> terms2 = new ArrayList(terms);
@@ -176,7 +125,6 @@ public class Algorithm {
 							newTerms.add(terms2);
 							
 						}
-						System.out.println(newTerms);
 						
 						nInequality newInequality = new nInequality(newTerms);
 						List<nInequality> newInequalities = new ArrayList<>();
@@ -224,12 +172,10 @@ public class Algorithm {
 								toBeInflated = (Edge) obj;
 							}
 						}
-						System.out.println(toBeInflated + ", " + expansion);
 						
 						int inequalityRow = toBeInflated.getFirst();
 						//subtract by 1 because the edges start at edge 1
 						nInequality toBeChanged = new nInequality(f.getInequalities().get(inequalityRow - 1).getTerms());
-						System.out.println(toBeChanged);
 						List<List<Object>> newTerms = new ArrayList<>();
 						for (List<Object> terms: toBeChanged.getTerms()) {
 							List<Object> terms2 = new ArrayList(terms);
@@ -250,7 +196,6 @@ public class Algorithm {
 							newTerms.add(terms2);
 							
 						}
-						System.out.println(newTerms);
 						
 						nInequality newInequality = new nInequality(newTerms);
 						List<nInequality> newInequalities = new ArrayList<>();
@@ -558,6 +503,70 @@ class FlowPolytope{
 		}
 	}
 	
+	
+	public FlowPolytope(Digraph G) {
+		conditions = new ArrayList<>();
+		ArrayList<Edge> edgeList = (ArrayList<Edge>) G.getEdges();
+		int sinkVertex = edgeList.get(edgeList.size() - 1).getLast();
+		for (int i = 1; i<sinkVertex; i++) {
+			List<Object> left = new ArrayList<>();
+			List<Object> right = new ArrayList<>();
+			right.add(new Netflow(i));
+			for (Edge e: edgeList) {
+				if (e.getFirst() == e.getLast()) {
+					System.out.println("Invalid flow polytope. Choose a higher n value. Disregard this result.");
+					break;
+				}
+				if (e.getFirst() == i && e.getLast() != sinkVertex) {
+					left.add(e);
+				}
+				else if (e.getLast() == i) {
+					right.add(e);
+				}
+			}
+			
+			if (left.size() >0) {
+				nInequality temp = new nInequality(left, right);
+				conditions.add(temp);
+			}
+		}
+		
+		
+	}
+	
+	
+	public FlowPolytope(Partition p, int n) {
+		Digraph G = new Digraph(p, n);
+		conditions = new ArrayList<>();
+		ArrayList<Edge> edgeList = (ArrayList<Edge>) G.getEdges();
+		int sinkVertex = edgeList.get(edgeList.size() - 1).getLast();
+		System.out.println(edgeList);
+		for (int i = 1; i<sinkVertex; i++) {
+			List<Object> left = new ArrayList<>();
+			List<Object> right = new ArrayList<>();
+			right.add(new Netflow(i));
+			for (Edge e: edgeList) {
+				if (e.getFirst() == e.getLast()) {
+					System.out.println("Invalid flow polytope. Choose a higher n value. Disregard this result.");
+					break;
+				}
+				if (e.getFirst() == i && e.getLast() != sinkVertex) {
+					left.add(e);
+				}
+				else if (e.getLast() == i) {
+					right.add(e);
+				}
+			}
+			
+			if (left.size() >0) {
+				nInequality temp = new nInequality(left, right);
+				conditions.add(temp);
+			}
+		}
+	}
+	
+	
+	
 	public void addInequality(nInequality a) {
 		conditions.add(a);
 	}
@@ -626,4 +635,59 @@ class Netflow{
 	 }
 	
 }
+
+class Digraph{
+	List<Edge> edgeList;
+	
+	public Digraph(List<Edge> a) {
+		edgeList = new ArrayList(a);
+	}
+	
+	public Digraph(Edge...edges) {
+		edgeList = new ArrayList<>();
+		for (Edge e: edges) {
+			edgeList.add(e);
+		}
+	}
+	
+	public Digraph(Partition part, int n) {
+		edgeList = new ArrayList<>();
+		ArrayList<Integer> partition = new ArrayList(part.getPartition());
+		for (int i = 0; i<partition.size(); i++) {
+			for (int j = n - partition.get(i) + 1; j<= n+1; j++) {
+				edgeList.add(new Edge(i+1, j));
+			}
+		}
+		edgeList.add(new Edge(partition.size() + 1, n+1));
+	}
+	
+	public String toString() {
+		String s = "[";
+		for (Edge e: edgeList) {
+			s = s + e.toString() + ", ";
+		}
+		
+		s = s.substring(0, s.length() -2) + "]";
+		return s;
+	}
+	
+	public List<Edge> getEdges(){
+		return edgeList;
+	}
+}
+
+class Partition{
+	ArrayList<Integer> part;
+	public Partition(int...a) {
+		part = new ArrayList<>();
+		for (int i: a) {
+			part.add(i);
+		}
+	}
+	
+	public ArrayList<Integer> getPartition(){
+		return part;
+	}
+}
+
 
